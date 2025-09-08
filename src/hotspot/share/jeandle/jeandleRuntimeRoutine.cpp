@@ -26,11 +26,11 @@
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/safepoint.hpp"
 
-#define GEN_ROUTINE_STUB(c_func, return_type, args_type)                                       \
+#define GEN_ROUTINE_STUB(c_func, return_type, ...)                                             \
   {                                                                                            \
     std::unique_ptr<llvm::LLVMContext> context_ptr = std::make_unique<llvm::LLVMContext>();    \
     llvm::LLVMContext& context = *context_ptr;                                                 \
-    llvm::FunctionType* func_type = llvm::FunctionType::get(return_type, args_type, false);    \
+    llvm::FunctionType* func_type = llvm::FunctionType::get(return_type, {__VA_ARGS__}, false);\
     ResourceMark rm;                                                                           \
     JeandleCompilation compilation(target_machine,                                             \
                                    data_layout,                                                \
@@ -70,4 +70,12 @@ JRT_ENTRY(void, JeandleRuntimeRoutine::safepoint_handler(JavaThread* current))
   SafepointMechanism::process_if_requested_with_exit_check(current, false /* check asyncs */);
 
   state->set_at_poll_safepoint(false);
+JRT_END
+
+JRT_LEAF(jfloat, JeandleRuntimeRoutine::frem(jfloat x, jfloat y))
+  return ((jfloat)fmod((double)x, (double)y));
+JRT_END
+
+JRT_LEAF(jdouble, JeandleRuntimeRoutine::drem(jdouble x, jdouble y))
+  return ((jdouble)fmod((double)x, (double)y));
 JRT_END

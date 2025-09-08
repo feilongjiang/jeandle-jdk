@@ -92,5 +92,10 @@ void JeandleCallVM::generate_call_VM(const char* name, address c_func, llvm::Fun
   ir_builder.CreateStore(ir_builder.getInt64((intptr_t)nullptr), last_Java_pc_ptr);
 
   // Return.
-  ir_builder.CreateRetVoid();
+  llvm::Type* ret_type = func_type->getReturnType();
+  if (ret_type == llvm::Type::getVoidTy(context)) {
+    ir_builder.CreateRetVoid();
+  } else {
+    ir_builder.CreateRet(call_c_func);
+  }
 }

@@ -23,6 +23,7 @@
 
 #include "jeandle/jeandleAbstractInterpreter.hpp"
 #include "jeandle/jeandleJavaCall.hpp"
+#include "jeandle/jeandleRuntimeRoutine.hpp"
 #include "jeandle/jeandleType.hpp"
 #include "jeandle/jeandleUtils.hpp"
 
@@ -1129,13 +1130,23 @@ void JeandleAbstractInterpreter::arith_op(BasicType type, Bytecodes::Code code) 
     case Bytecodes::_fadd: // fall through
     case Bytecodes::_dadd: _jvm->push(type, _ir_builder.CreateFAdd(l, r)); break;
     case Bytecodes::_fsub: // fall through
-    case Bytecodes::_dsub: Unimplemented(); break;
+    case Bytecodes::_dsub: _jvm->push(type, _ir_builder.CreateFSub(l, r)); break;
     case Bytecodes::_fmul: // fall through
     case Bytecodes::_dmul: _jvm->push(type, _ir_builder.CreateFMul(l, r)); break;
     case Bytecodes::_fdiv: // fall through
-    case Bytecodes::_ddiv: Unimplemented(); break;
-    case Bytecodes::_frem: // fall through
-    case Bytecodes::_drem: Unimplemented(); break;
+    case Bytecodes::_ddiv: _jvm->push(type, _ir_builder.CreateFDiv(l, r)); break;
+    case Bytecodes::_frem: {
+      llvm::CallInst* call_inst = _ir_builder.CreateCall(JeandleRuntimeRoutine::frem_callee(_module), {l, r});
+      call_inst->setCallingConv(llvm::CallingConv::Hotspot_JIT);
+      _jvm->fpush(call_inst);
+      break;
+    }
+    case Bytecodes::_drem: {
+      llvm::CallInst* call_inst = _ir_builder.CreateCall(JeandleRuntimeRoutine::drem_callee(_module), {l, r});
+      call_inst->setCallingConv(llvm::CallingConv::Hotspot_JIT);
+      _jvm->dpush(call_inst);
+      break;
+    }
     case Bytecodes::_fneg: // fall through
     case Bytecodes::_dneg: {
       assert(l == nullptr, "only one operand for negation");

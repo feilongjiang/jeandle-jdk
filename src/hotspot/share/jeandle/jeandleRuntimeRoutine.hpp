@@ -37,8 +37,11 @@
 //------------------------------------------------------------------------------------------------------
 //   |     c_func      |       return_type             |                    args_type
 //------------------------------------------------------------------------------------------------------
-#define ALL_JEANDLE_ROUTINES(def)                                                                                                     \
-  def(safepoint_handler, llvm::Type::getVoidTy(context), {llvm::PointerType::get(context, llvm::jeandle::AddrSpace::CHeapAddrSpace)})
+#define ALL_JEANDLE_ROUTINES(def)                                                                                                      \
+  def(safepoint_handler, llvm::Type::getVoidTy(context), {llvm::PointerType::get(context, llvm::jeandle::AddrSpace::CHeapAddrSpace)}) \
+  def(frem, llvm::Type::getFloatTy(context), {llvm::Type::getFloatTy(context), llvm::Type::getFloatTy(context)})                      \
+  def(drem, llvm::Type::getDoubleTy(context), {llvm::Type::getDoubleTy(context), llvm::Type::getDoubleTy(context)})                   \
+
 
 // JeandleRuntimeRoutine contains C/C++ functions that can be called from Jeandle compiled code.
 class JeandleRuntimeRoutine : public AllStatic {
@@ -47,10 +50,10 @@ class JeandleRuntimeRoutine : public AllStatic {
   static bool generate(llvm::TargetMachine* target_machine, llvm::DataLayout* data_layout);
 
 // Define all routines' llvm::FunctionCallee.
-#define DEF_LLVM_CALLEE(c_func, return_type, args_type)                                             \
+#define DEF_LLVM_CALLEE(c_func, return_type, ...)                                                    \
   static llvm::FunctionCallee c_func##_callee(llvm::Module& target_module) {                        \
     llvm::LLVMContext& context = target_module.getContext();                                        \
-    llvm::FunctionType* func_type = llvm::FunctionType::get(return_type, args_type, false);         \
+    llvm::FunctionType* func_type = llvm::FunctionType::get(return_type, {__VA_ARGS__}, false);     \
     llvm::FunctionCallee callee = target_module.getOrInsertFunction(#c_func, func_type);            \
     llvm::cast<llvm::Function>(callee.getCallee())->setCallingConv(llvm::CallingConv::Hotspot_JIT); \
     return callee;                                                                                  \
@@ -67,6 +70,8 @@ class JeandleRuntimeRoutine : public AllStatic {
   static llvm::StringMap<address> _stub_entry;
 
   static void safepoint_handler(JavaThread* current);
+  static jfloat frem(jfloat x, jfloat y);
+  static jdouble drem(jdouble x, jdouble y);
 };
 
 #endif // SHARE_JEANDLE_RUNTIME_ROUTINE_HPP
