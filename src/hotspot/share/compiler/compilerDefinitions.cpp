@@ -655,6 +655,10 @@ void CompilerConfig::ergo_initialize() {
       warning("UseCompressedClassPointers is disabled until jeandle supports compressed class pointers.");
     }
 
+    const JVMFlag* flag = JVMFlag::find_declared("VMContinuations");
+    tty->print_cr("flag type: %d", flag->get_origin())
+
+
 #ifndef PRODUCT
     if (FLAG_IS_CMDLINE(StackPrintLimit) && StackPrintLimit >= 200) {
       StackPrintLimit = 200;
